@@ -1,4 +1,4 @@
-module Cydian
+module github.com/CytonicMC/Cydian
 
 go 1.23
 
