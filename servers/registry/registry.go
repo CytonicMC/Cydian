@@ -27,6 +27,13 @@ func (r *Registry) AddOrUpdate(info ServerInfo) {
 	log.Printf("Registered/Updated server: %+v", info)
 }
 
+func (r *Registry) Remove(id string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.servers, id)
+	log.Printf("Removed server: %+v", id)
+}
+
 // Cleanup removes stale servers from the registry
 func (r *Registry) Cleanup(timeout time.Duration) {
 	r.mu.Lock()
