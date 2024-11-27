@@ -1,9 +1,9 @@
 package main
 
 import (
-	"Cydian/handlers"
-	"Cydian/metrics"
-	"Cydian/servers/registry"
+	"github.com/CytonicMC/Cydian/handlers"
+	"github.com/CytonicMC/Cydian/metrics"
+	"github.com/CytonicMC/Cydian/servers/registry"
 	"github.com/nats-io/nats.go"
 	"log"
 	"time"
@@ -26,7 +26,7 @@ func main() {
 	reg := registry.NewRegistry()
 
 	// Set up handler for server registration
-	handlers.RegisterHandler(nc, reg)
+	handlers.RegisterAll(nc, reg)
 
 	// Periodic cleanup of stale servers
 	go func() {
