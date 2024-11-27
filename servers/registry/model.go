@@ -9,4 +9,5 @@ type ServerInfo struct {
 	Port     int       `json:"port"`
 	ID       string    `json:"id"`
 	LastSeen time.Time `json:"last_seen"`
+	Group    string    `json:"group"`
 }
