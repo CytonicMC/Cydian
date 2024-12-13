@@ -1,6 +1,7 @@
-package registry
+package servers
 
 import (
+	"github.com/CytonicMC/Cydian/utils"
 	"github.com/nats-io/nats.go"
 	"log"
 	"sync"
@@ -22,7 +23,7 @@ func NewRegistry() *Registry {
 func (r *Registry) AddOrUpdate(info ServerInfo) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	info.LastSeen = time.Now()
+	info.LastSeen = utils.PointerNow()
 	r.servers[info.ID] = info
 	log.Printf("Registered/Updated server: %+v", info)
 }
@@ -39,7 +40,7 @@ func (r *Registry) Cleanup(timeout time.Duration) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for id, info := range r.servers {
-		if time.Since(info.LastSeen) > timeout {
+		if time.Since(*info.LastSeen) > timeout {
 			log.Printf("Removing stale server: %s", id)
 			delete(r.servers, id)
 		}
@@ -73,7 +74,7 @@ func (r *Registry) HealthCheck(nc *nats.Conn, timeout time.Duration) {
 		}
 
 		log.Printf("Received health response from server %s: %s", id, string(msg.Data))
-		server.LastSeen = time.Now() // Update last seen time on success
+		server.LastSeen = utils.PointerNow() // Update last seen time on success
 		r.servers[id] = server
 	}
 }

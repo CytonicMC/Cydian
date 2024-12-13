@@ -2,22 +2,24 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/CytonicMC/Cydian/servers/registry"
+	"github.com/CytonicMC/Cydian/servers"
 	"github.com/nats-io/nats.go"
 	"log"
 )
 
-func RegisterAll(nc *nats.Conn, registry *registry.Registry) {
-	RegisterHandler(nc, registry)
-	ListHandler(nc, registry)
+func RegisterServers(nc *nats.Conn, registry *servers.Registry) {
+	registrationHandler(nc, registry)
+	shutdownHandler(nc, registry)
+	listHandler(nc, registry)
+	proxyStartupHandler(nc, registry)
 }
 
-// RegisterHandler sets up the NATS subscription for server registration
-func RegisterHandler(nc *nats.Conn, reg *registry.Registry) {
+// registrationHandler sets up the NATS subscription for server registration
+func registrationHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.register"
 
 	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
-		var serverInfo registry.ServerInfo
+		var serverInfo servers.ServerInfo
 		if err := json.Unmarshal(msg.Data, &serverInfo); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
 			return
@@ -25,12 +27,7 @@ func RegisterHandler(nc *nats.Conn, reg *registry.Registry) {
 
 		// Add or update the server in the registry
 		reg.AddOrUpdate(serverInfo)
-
-		// Respond with acknowledgment
-		ack := []byte("Server registered successfully")
-		if err := msg.Respond(ack); err != nil {
-			log.Printf("Error sending acknowledgment: %v", err)
-		}
+		log.Printf("Registered server: %s", serverInfo.ID)
 
 		// add them to the proxies at runtime
 		NotifyProxiesOfStartup(nc, serverInfo)
@@ -42,11 +39,11 @@ func RegisterHandler(nc *nats.Conn, reg *registry.Registry) {
 }
 
 // ShutdownHandler sets up the NATS subscription for server shut-downs (Graceful ones, anyway.)
-func ShutdownHandler(nc *nats.Conn, reg *registry.Registry) {
+func shutdownHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.shutdown"
 
 	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
-		var serverInfo registry.ServerInfo
+		var serverInfo servers.ServerInfo
 		if err := json.Unmarshal(msg.Data, &serverInfo); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
 			return
@@ -54,12 +51,7 @@ func ShutdownHandler(nc *nats.Conn, reg *registry.Registry) {
 
 		// Add or update the server in the registry
 		reg.Remove(serverInfo.ID)
-
-		// Respond with acknowledgment
-		ack := []byte("Server removed successfully")
-		if err := msg.Respond(ack); err != nil {
-			log.Printf("Error sending acknowledgment: %v", err)
-		}
+		log.Printf("Removed server: %s", serverInfo.ID)
 
 		// notify proxies that servers have been removed
 		NotifyProxiesOfShutdown(nc, serverInfo)
@@ -70,8 +62,8 @@ func ShutdownHandler(nc *nats.Conn, reg *registry.Registry) {
 	log.Printf("Listening for server shutdown on subject '%s'", subject)
 }
 
-func NotifyProxiesOfShutdown(nc *nats.Conn, serverInfo registry.ServerInfo) {
-	const subject = "servers.notify-proxies.shutdown"
+func NotifyProxiesOfShutdown(nc *nats.Conn, serverInfo servers.ServerInfo) {
+	const subject = "servers.proxy.shutdown.notify"
 
 	data, err := json.Marshal(serverInfo)
 	if err != nil {
@@ -85,8 +77,8 @@ func NotifyProxiesOfShutdown(nc *nats.Conn, serverInfo registry.ServerInfo) {
 	}
 }
 
-func NotifyProxiesOfStartup(nc *nats.Conn, serverInfo registry.ServerInfo) {
-	const subject = "servers.notify-proxies.startup"
+func NotifyProxiesOfStartup(nc *nats.Conn, serverInfo servers.ServerInfo) {
+	const subject = "servers.proxy.startup.notify"
 
 	data, err := json.Marshal(serverInfo)
 	if err != nil {
@@ -95,22 +87,23 @@ func NotifyProxiesOfStartup(nc *nats.Conn, serverInfo registry.ServerInfo) {
 	}
 
 	err = nc.Publish(subject, data)
+	log.Printf("published server startup proxy notification")
 	if err != nil {
 		log.Printf("Failed to publish a server startup message: %v", err)
 	}
 }
 
 // ListHandler Handles NATS requests by replying will all the registered servers
-func ListHandler(nc *nats.Conn, reg *registry.Registry) {
+func listHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.list"
 	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
-		// Fetch all registered servers
-		servers := reg.GetAll()
+		// Fetch all registered all
+		all := reg.GetAll()
 
 		// Serialize to JSON
-		response, err := json.Marshal(servers)
+		response, err := json.Marshal(all)
 		if err != nil {
-			log.Printf("Error marshalling servers list: %v", err)
+			log.Printf("Error marshalling all list: %v", err)
 			err := msg.Respond([]byte("Error generating server list"))
 			if err != nil {
 				log.Printf("Error sending acknowledgment ;-; -> %v", err)
@@ -128,4 +121,29 @@ func ListHandler(nc *nats.Conn, reg *registry.Registry) {
 		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
 	}
 	log.Printf("Listening for server list requests on subject '%s'", subject)
+}
+
+func proxyStartupHandler(nc *nats.Conn, reg *servers.Registry) {
+	const subject = "servers.proxy.startup"
+
+	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+		// don't care about the message
+
+		ack, err := json.Marshal(reg.GetAll())
+
+		if err != nil {
+			log.Printf("Error marshalling all list: %v", err)
+			ack = []byte("ERROR: Failed to marshal all servers")
+		}
+
+		// either respond with the json data, or the error message
+		if err1 := msg.Respond(ack); err1 != nil {
+			log.Printf("Error sending acknowledgment: %v", err1)
+		}
+
+	})
+	if err != nil {
+		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
+	}
+	log.Printf("Listening for proxy startup on subject '%s'", subject)
 }
