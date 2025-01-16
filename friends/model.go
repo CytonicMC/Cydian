@@ -12,7 +12,19 @@ type FriendRequest struct {
 	Expiry    time.Time `json:"expiry"`
 }
 
-// FriendResponse The json "packet" sent on declination or acceptance
-type FriendResponse struct {
+// FriendResponseId The json "packet" sent on declination or acceptance
+type FriendResponseId struct {
 	ID uuid.UUID `json:"request_id"`
+}
+
+// FriendResponse The json "packet" send on declination or acceptance, but it uses more human values. (Mostly from commands, making cytosis work easier)
+type FriendResponse struct {
+	Sender    uuid.UUID `json:"sender"`
+	Recipient uuid.UUID `json:"recipient"`
+}
+
+type FriendRequestApiResponse struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"` //ie: "ALREADY_SENT"
+	Message string `json:"message"`
 }

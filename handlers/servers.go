@@ -72,6 +72,7 @@ func NotifyProxiesOfShutdown(nc *nats.Conn, serverInfo servers.ServerInfo) {
 	}
 
 	err = nc.Publish(subject, data)
+	log.Printf("Notified proxies of shutdown for server: %s", serverInfo.ID)
 	if err != nil {
 		log.Printf("Failed to publish a server shutdown message: %v", err)
 	}

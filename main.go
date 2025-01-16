@@ -27,7 +27,7 @@ func main() {
 
 	// Initialize the registries
 	serverReg := servers.NewRegistry()
-	friendReg := friends.NewRegistry()
+	friendReg := friends.NewRegistry(nc)
 	partyInviteReg := parties.NewInviteRegistry()
 	partyReg := parties.NewPartyRegistry()
 

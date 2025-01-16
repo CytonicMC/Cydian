@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"encoding/json"
 	"github.com/CytonicMC/Cydian/utils"
 	"github.com/nats-io/nats.go"
 	"log"
@@ -69,6 +70,18 @@ func (r *Registry) HealthCheck(nc *nats.Conn, timeout time.Duration) {
 		msg, err := nc.Request(subject, nil, timeout)
 		if err != nil {
 			log.Printf("Server %s is unresponsive, removing from registry: %v", id, err)
+
+			serverInfo := r.servers[id]
+
+			data, err := json.Marshal(serverInfo)
+			if err != nil {
+				log.Printf("Failed to jsonify serverInfo")
+				return
+			}
+
+			err = nc.Publish("servers.proxy.shutdown.notify", data)
+			log.Printf("Notified proxies of shutdown for server '%s' due to health check failure", serverInfo.ID)
+
 			delete(r.servers, id)
 			continue
 		}
