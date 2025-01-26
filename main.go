@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Error connecting to NATS: %v", err)
 	}
 	defer nc.Close()
-	log.Println("Connected to NATS!")
+	log.Printf("Connected to NATS! (Using url %s)\n", utils.NatsUrl())
 
 	// Initialize the registries
 	serverReg := servers.NewRegistry()
