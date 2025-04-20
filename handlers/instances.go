@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/CytonicMC/Cydian/instances"
 	"github.com/hashicorp/nomad/api"
 	"github.com/nats-io/nats.go"
 	"log"
+	"time"
 )
 
 func RegisterInstances(nc *nats.Conn) {
@@ -299,7 +301,11 @@ func updateHandler(nc *nats.Conn, client *api.Client) {
 			return
 		}
 
-		_, _, err := client.Jobs().EnforceRegister(job, *job.JobModifyIndex, nil)
+		job.Meta = map[string]string{
+			"update_trigger": fmt.Sprintf("%d", time.Now().UnixNano()),
+		}
+
+		_, _, err := client.Jobs().Register(job, nil)
 
 		if err != nil {
 			reponse, _ := json.Marshal(instances.InstanceResponse{
