@@ -36,6 +36,7 @@ func main() {
 	handlers.RegisterFriends(nc, friendReg)
 	handlers.RegisterPartyInvites(nc, partyInviteReg)
 	handlers.RegisterParties(nc, partyReg)
+	handlers.RegisterInstances(nc)
 
 	// Periodic cleanup of stale servers
 	go func() {
