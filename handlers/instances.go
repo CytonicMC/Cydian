@@ -299,7 +299,7 @@ func updateHandler(nc *nats.Conn, client *api.Client) {
 			return
 		}
 
-		_, _, err := client.Jobs().EnforceRegister(job, 1, nil)
+		_, _, err := client.Jobs().EnforceRegister(job, *job.JobModifyIndex, nil)
 
 		if err != nil {
 			reponse, _ := json.Marshal(instances.InstanceResponse{
