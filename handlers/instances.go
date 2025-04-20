@@ -62,13 +62,14 @@ func createHandler(nc *nats.Conn, client *api.Client) {
 			}
 		}
 
-		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &count, "Adding instance(s)", true, nil, nil)
+		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &count, "Adding instance(s)", false, nil, nil)
 
 		if err != nil {
 			reponse, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
-				Message: "JOB_REGISTRATION_FAILED",
+				Message: "JOB_SCALING_FAILED",
 			})
+			log.Printf("Error scaling job: %v", err)
 			err := msg.Respond(reponse)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
@@ -121,11 +122,11 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 			}
 			return
 		}
-
+		zero := 0
 		for _, group := range job.TaskGroups {
 			if *group.Name == packet.InstanceType {
 				if group.Count == nil {
-					zero := 0
+
 					group.Count = &zero
 				} else {
 					*group.Count = 0
@@ -133,7 +134,7 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 			}
 		}
 
-		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, nil, "Removing all instances", true, nil, nil)
+		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &zero, "Removing all instances", true, nil, nil)
 		if err != nil {
 			if err != nil {
 				log.Printf("Error registering job: %v", err)
