@@ -143,6 +143,31 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 			}
 		}
 
+		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
+		if errJobs != nil {
+			log.Printf("Error getting job info: %v", errJobs)
+			reponse, _ := json.Marshal(instances.InstanceResponse{
+				Success: false,
+				Message: "JOB_NOT_FOUND",
+			})
+			err := msg.Respond(reponse)
+			if err != nil {
+				log.Printf("Error sending acknowledgment: %v", err)
+			}
+			return
+		}
+
+		for _, group := range job.TaskGroups {
+			if *group.Name == packet.InstanceType {
+				if group.Count == nil {
+					zero := 0
+					group.Count = &zero
+				} else {
+					*group.Count = 0
+				}
+			}
+		}
+
 		reponse, _ := json.Marshal(instances.InstanceResponse{
 			Success: true,
 			Message: "SUCCESS",
@@ -203,6 +228,31 @@ func deleteHandler(nc *nats.Conn, client *api.Client) {
 			return
 		} else {
 			log.Printf("Stopped allocation %s", alloc.ID)
+		}
+
+		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
+		if errJobs != nil {
+			log.Printf("Error getting job info: %v", errJobs)
+			reponse, _ := json.Marshal(instances.InstanceResponse{
+				Success: false,
+				Message: "JOB_NOT_FOUND",
+			})
+			err := msg.Respond(reponse)
+			if err != nil {
+				log.Printf("Error sending acknowledgment: %v", err)
+			}
+			return
+		}
+
+		for _, group := range job.TaskGroups {
+			if *group.Name == packet.InstanceType {
+				if group.Count == nil {
+					zero := 0
+					group.Count = &zero
+				} else {
+					*group.Count -= 1
+				}
+			}
 		}
 
 		reponse, _ := json.Marshal(instances.InstanceResponse{
