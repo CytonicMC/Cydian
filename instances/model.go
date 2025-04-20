@@ -14,6 +14,10 @@ type InstanceDeleteAllRequest struct {
 	InstanceType string `json:"instanceType"`
 }
 
+type InstanceUpdateRequest struct {
+	InstanceType string `json:"instanceType"`
+}
+
 type InstanceDeleteRequest struct {
 	InstanceType string `json:"instanceType"`
 	AllocId      string `json:"allocId"`

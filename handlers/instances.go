@@ -16,6 +16,7 @@ func RegisterInstances(nc *nats.Conn) {
 	createHandler(nc, client)
 	deleteAllHandler(nc, client)
 	deleteHandler(nc, client)
+	updateHandler(nc, client)
 }
 
 func createHandler(nc *nats.Conn, client *api.Client) {
@@ -162,7 +163,7 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 	if err != nil {
 		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
 	}
-	log.Printf("Listening for instance creations on subject '%s'", subject)
+	log.Printf("Listening for bulk instance deletions on subject '%s'", subject)
 }
 
 func deleteHandler(nc *nats.Conn, client *api.Client) {
@@ -263,5 +264,67 @@ func deleteHandler(nc *nats.Conn, client *api.Client) {
 	if err != nil {
 		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
 	}
-	log.Printf("Listening for instance creations on subject '%s'", subject)
+	log.Printf("Listening for instance deletions on subject '%s'", subject)
+}
+
+func updateHandler(nc *nats.Conn, client *api.Client) {
+	//todo: graceful server updates
+	const subject = "servers.update"
+	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+		var packet instances.InstanceCreateRequest
+		if err := json.Unmarshal(msg.Data, &packet); err != nil {
+			log.Printf("Invalid message format: %s", msg.Data)
+			response, _ := json.Marshal(instances.InstanceResponse{
+				Success: false,
+				Message: "INVALID_MESSAGE_FORMAT",
+			})
+			err := msg.Respond(response)
+			if err != nil {
+				log.Printf("Error sending acknowledgment: %v", err)
+			}
+			return
+		}
+
+		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
+		if errJobs != nil {
+			log.Printf("Error getting job info: %v", errJobs)
+			reponse, _ := json.Marshal(instances.InstanceResponse{
+				Success: false,
+				Message: "JOB_NOT_FOUND",
+			})
+			err := msg.Respond(reponse)
+			if err != nil {
+				log.Printf("Error sending acknowledgment: %v", err)
+			}
+			return
+		}
+
+		_, _, err := client.Jobs().Register(job, nil)
+
+		if err != nil {
+			reponse, _ := json.Marshal(instances.InstanceResponse{
+				Success: false,
+				Message: "JOB_REGISTRATION_FAILED",
+			})
+			log.Printf("Error scaling job: %v", err)
+			err := msg.Respond(reponse)
+			if err != nil {
+				log.Printf("Error sending acknowledgment: %v", err)
+			}
+			return
+		}
+
+		reponse, _ := json.Marshal(instances.InstanceResponse{
+			Success: true,
+			Message: "SUCCESS",
+		})
+		errRespond := msg.Respond(reponse)
+		if errRespond != nil {
+			log.Printf("Error sending acknowledgment: %v", err)
+		}
+	})
+	if err != nil {
+		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
+	}
+	log.Printf("Listening for instance updates on subject '%s'", subject)
 }
