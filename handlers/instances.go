@@ -134,7 +134,7 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 			}
 		}
 
-		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &zero, "Removing all instances", true, nil, nil)
+		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &zero, "Removing all instances", false, nil, nil)
 		if err != nil {
 			if err != nil {
 				log.Printf("Error registering job: %v", err)
