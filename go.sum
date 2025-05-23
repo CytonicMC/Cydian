@@ -26,6 +26,8 @@ github.com/hashicorp/go-rootcerts v1.0.2 h1:jzhAVGtqPKbwpyCPELlgNWhE1znq+qwJtW5O
 github.com/hashicorp/go-rootcerts v1.0.2/go.mod h1:pqUvnprVnM5bf7AOirdbb01K4ccR319Vf4pU3K5EGc8=
 github.com/hashicorp/nomad/api v0.0.0-20250418202452-b11619010e1c h1:1tjU9ROFUdWsvFEBLNZ34+Y5cMw+ixawYX+1PMGU9zs=
 github.com/hashicorp/nomad/api v0.0.0-20250418202452-b11619010e1c/go.mod h1:y4olHzVXiQolzyk6QD/gqJxQTnnchlTf/QtczFFKwOI=
+github.com/hashicorp/nomad/api v0.0.0-20250523151416-e3fea745eb3d h1:NBvk8RFuWAxt9Axar6Y8aSRlIMMcij5Mul+O8FNDe8I=
+github.com/hashicorp/nomad/api v0.0.0-20250523151416-e3fea745eb3d/go.mod h1:y4olHzVXiQolzyk6QD/gqJxQTnnchlTf/QtczFFKwOI=
 github.com/klauspost/compress v1.17.9 h1:6KIumPrER1LHsvBVuDa0r5xaG0Es51mhhB9BQB2qeMA=
 github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
