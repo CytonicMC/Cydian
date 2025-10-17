@@ -2,11 +2,13 @@ package servers
 
 import (
 	"encoding/json"
-	"github.com/CytonicMC/Cydian/utils"
-	"github.com/nats-io/nats.go"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/CytonicMC/Cydian/env"
+	"github.com/CytonicMC/Cydian/utils"
+	"github.com/nats-io/nats.go"
 )
 
 // Registry to store active servers
@@ -67,7 +69,7 @@ func (r *Registry) HealthCheck(nc *nats.Conn, timeout time.Duration) {
 
 	for id, server := range r.servers {
 		subject := "health.check." + id
-		msg, err := nc.Request(subject, nil, timeout)
+		msg, err := nc.Request(env.EnsurePrefixed(subject), nil, timeout)
 		if err != nil {
 			log.Printf("Server %s is unresponsive, removing from registry: %v", id, err)
 

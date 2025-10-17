@@ -3,11 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"time"
+
+	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/instances"
 	"github.com/hashicorp/nomad/api"
 	"github.com/nats-io/nats.go"
-	"log"
-	"time"
 )
 
 func RegisterInstances(nc *nats.Conn) {
@@ -23,7 +25,7 @@ func RegisterInstances(nc *nats.Conn) {
 
 func createHandler(nc *nats.Conn, client *api.Client) {
 	const subject = "servers.create"
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet instances.InstanceCreateRequest
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -97,7 +99,7 @@ func createHandler(nc *nats.Conn, client *api.Client) {
 
 func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 	const subject = "servers.delete.all"
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet instances.InstanceDeleteAllRequest
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -170,7 +172,7 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 
 func deleteHandler(nc *nats.Conn, client *api.Client) {
 	const subject = "servers.delete"
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet instances.InstanceDeleteRequest
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -272,7 +274,7 @@ func deleteHandler(nc *nats.Conn, client *api.Client) {
 func updateHandler(nc *nats.Conn, client *api.Client) {
 	//todo: graceful server updates
 	const subject = "servers.update"
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet instances.InstanceCreateRequest
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)

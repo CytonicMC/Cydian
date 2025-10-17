@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
+
+	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/servers"
 	"github.com/nats-io/nats.go"
-	"log"
 )
 
 func RegisterServers(nc *nats.Conn, registry *servers.Registry) {
@@ -18,7 +20,7 @@ func RegisterServers(nc *nats.Conn, registry *servers.Registry) {
 func registrationHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.register"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var serverInfo servers.ServerInfo
 		if err := json.Unmarshal(msg.Data, &serverInfo); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -42,7 +44,7 @@ func registrationHandler(nc *nats.Conn, reg *servers.Registry) {
 func shutdownHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.shutdown"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var serverInfo servers.ServerInfo
 		if err := json.Unmarshal(msg.Data, &serverInfo); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -71,7 +73,7 @@ func NotifyProxiesOfShutdown(nc *nats.Conn, serverInfo servers.ServerInfo) {
 		return
 	}
 
-	err = nc.Publish(subject, data)
+	err = nc.Publish(env.EnsurePrefixed(subject), data)
 	log.Printf("Notified proxies of shutdown for server: %s", serverInfo.ID)
 	if err != nil {
 		log.Printf("Failed to publish a server shutdown message: %v", err)
@@ -87,7 +89,7 @@ func NotifyProxiesOfStartup(nc *nats.Conn, serverInfo servers.ServerInfo) {
 		return
 	}
 
-	err = nc.Publish(subject, data)
+	err = nc.Publish(env.EnsurePrefixed(subject), data)
 	log.Printf("published server startup proxy notification")
 	if err != nil {
 		log.Printf("Failed to publish a server startup message: %v", err)
@@ -97,7 +99,7 @@ func NotifyProxiesOfStartup(nc *nats.Conn, serverInfo servers.ServerInfo) {
 // ListHandler Handles NATS requests by replying will all the registered servers
 func listHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.list"
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		// Fetch all registered all
 		all := reg.GetAll()
 
@@ -127,7 +129,7 @@ func listHandler(nc *nats.Conn, reg *servers.Registry) {
 func proxyStartupHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.proxy.startup"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		// don't care about the message
 
 		ack, err := json.Marshal(reg.GetAll())

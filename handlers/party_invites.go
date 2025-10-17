@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
+
+	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/parties"
 	"github.com/nats-io/nats.go"
-	"log"
 )
 
 func RegisterPartyInvites(nc *nats.Conn, registry *parties.InviteRegistry) {
@@ -15,7 +17,7 @@ func RegisterPartyInvites(nc *nats.Conn, registry *parties.InviteRegistry) {
 func acceptInviteHandler(nc *nats.Conn, registry *parties.InviteRegistry) {
 	const subject = "party.invites.accept"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet parties.PartyInviteAccept
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -52,7 +54,7 @@ func sendJoin(nc *nats.Conn, req parties.PartyInvite) {
 		log.Fatalf("Error marshalling friend request: %v", errr)
 		return
 	}
-	err := nc.Publish(subject, marshal)
+	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
 		log.Fatalf("Error publishing friends acceptance message: %v", err)
 		return
