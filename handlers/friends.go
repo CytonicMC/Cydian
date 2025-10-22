@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
+
+	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/friends"
 	"github.com/nats-io/nats.go"
-	"log"
 )
 
 func RegisterFriends(nc *nats.Conn, registry *friends.Registry) {
@@ -18,7 +20,7 @@ func RegisterFriends(nc *nats.Conn, registry *friends.Registry) {
 func acceptHandlerId(nc *nats.Conn, registry *friends.Registry) {
 	const subject = "friends.accept.by_id"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet friends.FriendResponseId
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -58,7 +60,7 @@ func acceptHandlerId(nc *nats.Conn, registry *friends.Registry) {
 func declineHandlerId(nc *nats.Conn, registry *friends.Registry) {
 	const subject = "friends.decline.by_id"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet friends.FriendResponseId
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -97,7 +99,7 @@ func declineHandlerId(nc *nats.Conn, registry *friends.Registry) {
 func acceptHandler(nc *nats.Conn, registry *friends.Registry) {
 	const subject = "friends.accept"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet friends.FriendResponse
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -137,7 +139,7 @@ func acceptHandler(nc *nats.Conn, registry *friends.Registry) {
 func declineHandler(nc *nats.Conn, registry *friends.Registry) {
 	const subject = "friends.decline"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		var packet friends.FriendResponse
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
 			log.Printf("Invalid message format: %s", msg.Data)
@@ -181,7 +183,7 @@ func sendDeclination(nc *nats.Conn, req friends.FriendRequest) {
 		log.Fatalf("Error marshalling friend request: %v", errr)
 		return
 	}
-	err := nc.Publish(subject, marshal)
+	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
 		log.Fatalf("Error publishing friends declination message: %v", err)
 		return
@@ -191,7 +193,7 @@ func sendDeclination(nc *nats.Conn, req friends.FriendRequest) {
 func requestHandler(nc *nats.Conn, req *friends.Registry) {
 	const subject = "friends.request"
 
-	_, err := nc.Subscribe(subject, func(msg *nats.Msg) {
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 
 		var packet friends.FriendRequest
 		if err := json.Unmarshal(msg.Data, &packet); err != nil {
@@ -224,7 +226,7 @@ func requestHandler(nc *nats.Conn, req *friends.Registry) {
 			}
 
 			if !dontSend {
-				err1 := nc.Publish("friends.request.notify", msg.Data)
+				err1 := nc.Publish(env.EnsurePrefixed("friends.request.notify"), msg.Data)
 				if err1 != nil {
 					log.Printf("Error publishing friends request: %v", err1)
 					return

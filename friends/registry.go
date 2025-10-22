@@ -2,11 +2,13 @@ package friends
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/nats-io/nats.go"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/CytonicMC/Cydian/env"
+	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 )
 
 // Registry to store active servers
@@ -213,7 +215,7 @@ func SendAcceptance(nc *nats.Conn, req FriendRequest) {
 		log.Fatalf("Error marshalling friend request: %v", errr)
 		return
 	}
-	err := nc.Publish(subject, marshal)
+	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
 		log.Fatalf("Error publishing friends acceptance message: %v", err)
 		return
