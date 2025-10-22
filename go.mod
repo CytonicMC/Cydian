@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/nomad/api v0.0.0-20250418202452-b11619010e1c
+	github.com/hashicorp/nomad/api v0.0.0-20251022123658-12f6941b09e6
 	github.com/nats-io/nats.go v1.38.0
 	github.com/prometheus/client_golang v1.23.2
 )
@@ -13,7 +13,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/hashicorp/cronexpr v1.1.2 // indirect
+	github.com/hashicorp/cronexpr v1.1.3 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
