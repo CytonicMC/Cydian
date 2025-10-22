@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"time"
+
+	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/friends"
 	"github.com/CytonicMC/Cydian/handlers"
 	"github.com/CytonicMC/Cydian/metrics"
@@ -8,8 +12,6 @@ import (
 	"github.com/CytonicMC/Cydian/servers"
 	"github.com/CytonicMC/Cydian/utils"
 	"github.com/nats-io/nats.go"
-	"log"
-	"time"
 )
 
 func main() {
@@ -49,5 +51,6 @@ func main() {
 	}()
 
 	// Keep the service running
+	log.Printf("Started Cydian in environment %s\n", env.Environment())
 	select {}
 }
