@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/CytonicMC/Cydian/app"
 	"github.com/CytonicMC/Cydian/env"
 	"github.com/CytonicMC/Cydian/friends"
 	"github.com/CytonicMC/Cydian/handlers"
@@ -30,15 +31,23 @@ func main() {
 	// Initialize the registries
 	serverReg := servers.NewRegistry()
 	friendReg := friends.NewRegistry(nc)
-	partyInviteReg := parties.NewInviteRegistry()
-	partyReg := parties.NewPartyRegistry()
+	partyReg := parties.NewPartyRegistry(nc)
+	partyInviteReg := parties.NewInviteRegistry(nc, partyReg)
+
+	instance := &app.Cydian{
+		ServerRegistry:        serverReg,
+		FriendRequestRegistry: friendReg,
+		PartyInviteRegistry:   partyInviteReg,
+		PartyRegistry:         partyReg,
+	}
 
 	// Set up handlers
 	handlers.RegisterServers(nc, serverReg)
 	handlers.RegisterFriends(nc, friendReg)
-	handlers.RegisterPartyInvites(nc, partyInviteReg)
+	handlers.RegisterPartyInvites(nc, partyInviteReg, instance)
 	handlers.RegisterParties(nc, partyReg)
 	handlers.RegisterInstances(nc)
+	handlers.RegisterPlayerHandlers(nc, instance)
 
 	// Periodic cleanup of stale servers
 	go func() {
