@@ -69,7 +69,7 @@ func (r *Registry) HealthCheck(nc *nats.Conn, timeout time.Duration) {
 
 	for id, server := range r.servers {
 		subject := "health.check." + id
-		msg, err := nc.Request(env.EnsurePrefixed(subject), nil, timeout)
+		_, err := nc.Request(env.EnsurePrefixed(subject), nil, timeout)
 		if err != nil {
 			log.Printf("Server %s is unresponsive, removing from registry: %v", id, err)
 
@@ -81,14 +81,13 @@ func (r *Registry) HealthCheck(nc *nats.Conn, timeout time.Duration) {
 				return
 			}
 
-			err = nc.Publish("servers.proxy.shutdown.notify", data)
+			err = nc.Publish(env.EnsurePrefixed("servers.proxy.shutdown.notify"), data)
 			log.Printf("Notified proxies of shutdown for server '%s' due to health check failure", serverInfo.ID)
 
 			delete(r.servers, id)
 			continue
 		}
 
-		log.Printf("Received health response from server %s: %s", id, string(msg.Data))
 		server.LastSeen = utils.PointerNow() // Update last seen time on success
 		r.servers[id] = server
 	}
