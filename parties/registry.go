@@ -47,7 +47,7 @@ func (r *PartyRegistry) CreateParty(id UUID, owner UUID, initialInvite *PartyInv
 	r.parties[party.ID] = party
 	r.mu.Unlock()
 
-	msg, err := json.Marshal(&party)
+	msg, err := json.Marshal(PartyCreatePacket{Party: party})
 	if err != nil {
 		log.Printf("Failed to marshal party create packet: %v", err)
 	}
@@ -321,7 +321,7 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 		party.Moderators = append(party.Moderators, player)
 		party.Members = removeUUID(party.Members, player)
 
-		err := r.nc.Publish(env.EnsurePrefixed("party.promote.moderator"), msg)
+		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.moderator"), msg)
 		if err != nil {
 			return false, "ERR_BROADCAST_FAILED"
 		}
@@ -332,7 +332,7 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 		party.CurrentLeader = player
 		party.Moderators = append(removeUUID(party.Moderators, player), currentLeader)
 
-		err := r.nc.Publish(env.EnsurePrefixed("party.promote.leader"), msg)
+		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.leader"), msg)
 		if err != nil {
 			return false, "ERR_BROADCAST_FAILED"
 		}

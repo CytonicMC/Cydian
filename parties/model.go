@@ -149,3 +149,7 @@ type PartyStateChangePacket struct {
 	PlayerID UUID `json:"player_id"`
 	State    bool `json:"state"`
 }
+
+type PartyCreatePacket struct {
+	Party Party `json:"party"`
+}

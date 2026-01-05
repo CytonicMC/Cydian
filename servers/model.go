@@ -15,6 +15,10 @@ type ServerInfo struct {
 	Group    string     `json:"group"`
 }
 
+type ServerList struct {
+	Servers []ServerInfo `json:"servers"`
+}
+
 func (s ServerInfo) MarshalJSON() ([]byte, error) {
 	type Alias ServerInfo
 	return json.Marshal(&struct {
