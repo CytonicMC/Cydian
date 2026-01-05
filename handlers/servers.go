@@ -101,8 +101,9 @@ func listHandler(nc *nats.Conn, reg *servers.Registry) {
 	const subject = "servers.list"
 	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		// Fetch all registered all
-		all := reg.GetAll()
-
+		all := servers.ServerList{
+			Servers: reg.GetAll(),
+		}
 		// Serialize to JSON
 		response, err := json.Marshal(all)
 		if err != nil {

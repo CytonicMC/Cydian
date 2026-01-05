@@ -236,16 +236,8 @@ func fetchHandler(nc *nats.Conn, registry *parties.PartyRegistry) {
 }
 
 func reply(msg *nats.Msg, success bool, reason string) {
-	if success {
-		err := msg.Respond([]byte("success"))
-		if err != nil {
-			log.Printf("Error sending acknowledgment: %v", err)
-		}
-		return
-	}
-
 	ack, err1 := json.Marshal(&parties.GenericPartyResponsePacket{
-		Success: false,
+		Success: success,
 		Message: reason,
 	})
 	if err1 != nil {
