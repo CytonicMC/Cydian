@@ -120,6 +120,10 @@ type PartyInviteExpirePacket struct {
 	SenderID  UUID `json:"sender_id"`
 }
 
+type PartyInvitePacket struct {
+	Invite PartyInvite `json:"invite"`
+}
+
 type PartyLeaveRequestPacket struct {
 	PlayerID UUID `json:"player_id"`
 }

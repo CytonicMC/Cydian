@@ -128,7 +128,10 @@ func sendInviteHandler(nc *nats.Conn, registry *parties.InviteRegistry, cydian *
 
 		// broadcast the invite sent
 		if !isNewParty {
-			err := nc.Publish(env.EnsurePrefixed("party.invites.send.notify"), serialized)
+			ack, _ := json.Marshal(&parties.PartyInvitePacket{
+				Invite: *invite,
+			})
+			err := nc.Publish(env.EnsurePrefixed("party.invites.send.notify"), ack)
 			if err != nil {
 				log.Printf("Error sending error party invite send announcment: %v", errMsg)
 			}
