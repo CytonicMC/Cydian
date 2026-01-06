@@ -224,7 +224,7 @@ func (r *PartyRegistry) DisconnectFromParty(player UUID) {
 			SenderID: player,
 			PlayerID: party.CurrentLeader,
 		})
-		_ = r.nc.Publish(env.EnsurePrefixed("party.transfer.disconnected"), msg1)
+		_ = r.nc.Publish(env.EnsurePrefixed("party.transfer.notify.disconnected"), msg1)
 		return
 	}
 
@@ -276,7 +276,7 @@ func (r *PartyRegistry) LeaveParty(player UUID) (success bool, error string) {
 			SenderID: player,
 			PlayerID: newLeader,
 		})
-		err := r.nc.Publish(env.EnsurePrefixed("party.transfer.left"), msg)
+		err := r.nc.Publish(env.EnsurePrefixed("party.transfer.notify.left"), msg)
 		if err != nil {
 			return false, "ERR_BROADCAST_FAILED"
 		}
@@ -320,7 +320,7 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 	if party.IsMember(player) {
 		party.Moderators = append(party.Moderators, player)
 		party.Members = removeUUID(party.Members, player)
-
+		r.parties[partyID] = *party
 		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.moderator"), msg)
 		if err != nil {
 			return false, "ERR_BROADCAST_FAILED"
@@ -331,7 +331,7 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 		currentLeader := party.CurrentLeader
 		party.CurrentLeader = player
 		party.Moderators = append(removeUUID(party.Moderators, player), currentLeader)
-
+		r.parties[partyID] = *party
 		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.leader"), msg)
 		if err != nil {
 			return false, "ERR_BROADCAST_FAILED"
@@ -402,7 +402,7 @@ func (r *PartyRegistry) Transfer(sender UUID, partyID UUID, player UUID) (succes
 		PlayerID: player,
 		SenderID: sender,
 	})
-	_ = r.nc.Publish(env.EnsurePrefixed("party.transfer.command"), msg)
+	_ = r.nc.Publish(env.EnsurePrefixed("party.transfer.notify.command"), msg)
 
 	return true, ""
 }
