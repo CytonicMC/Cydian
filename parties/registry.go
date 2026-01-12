@@ -33,8 +33,8 @@ func (r *PartyRegistry) CreateParty(id UUID, owner UUID, initialInvite *PartyInv
 	party := Party{
 		ID:            id,
 		CurrentLeader: owner,
-		Moderators:    []UUID{},
-		Members:       []UUID{},
+		Moderators:    NewSet(),
+		Members:       NewSet(),
 		Open:          false,
 		OpenInvites:   false,
 		Muted:         false,
@@ -91,7 +91,7 @@ func (r *PartyRegistry) RemoveInvite(partyID UUID, inviteID UUID) bool {
 	r.parties[partyID] = party
 
 	// check for an empty party and remove it
-	if len(party.Members) == 0 && len(party.Moderators) == 0 && len(party.ActiveInvites) == 0 {
+	if party.TotalSize() <= 1 {
 		r.disbandForEmptyInternal(partyID)
 		return false
 	}
@@ -188,7 +188,7 @@ func (r *PartyRegistry) JoinParty(partyID UUID, player UUID, fromInvite bool) (s
 		return false, "ERR_BROADCAST_FAILED"
 	}
 
-	party.Members = append(party.Members, player)
+	party.Members.Add(player)
 	r.parties[partyID] = party
 	log.Printf("PlayerID %s joined party %s", player, partyID)
 
@@ -212,9 +212,9 @@ func (r *PartyRegistry) DisconnectFromParty(player UUID) {
 	}
 
 	if party.IsMember(player) {
-		party.Members = removeUUID(party.Members, player)
+		party.Members.Remove(player)
 	} else if party.IsModerator(player) {
-		party.Moderators = removeUUID(party.Moderators, player)
+		party.Moderators.Remove(player)
 	} else {
 		party.CurrentLeader = r.selectNewLeader(*party)
 		r.parties[party.ID] = *party
@@ -258,8 +258,8 @@ func (r *PartyRegistry) LeaveParty(player UUID) (success bool, error string) {
 	}
 
 	if party.CurrentLeader == player {
-		party.Moderators = removeUUID(party.Moderators, player)
-		party.Members = removeUUID(party.Members, player)
+		party.Moderators.Remove(player)
+		party.Members.Remove(player)
 
 		newLeader := r.selectNewLeader(*party)
 		if newLeader == UUID(uuid.Nil) {
@@ -292,7 +292,7 @@ func (r *PartyRegistry) LeaveParty(player UUID) (success bool, error string) {
 		return false, "ERR_BROADCAST_FAILED"
 	}
 
-	party.Members = removeUUID(party.Members, player)
+	party.Members.Remove(player)
 	r.parties[party.ID] = *party
 	log.Printf("PlayerID %s left party %s", player, party.ID)
 
@@ -318,8 +318,8 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 		SenderID: sender,
 	})
 	if party.IsMember(player) {
-		party.Moderators = append(party.Moderators, player)
-		party.Members = removeUUID(party.Members, player)
+		party.Moderators.Add(player)
+		party.Members.Remove(player)
 		r.parties[partyID] = *party
 		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.moderator"), msg)
 		if err != nil {
@@ -330,7 +330,8 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 	if party.IsModerator(player) {
 		currentLeader := party.CurrentLeader
 		party.CurrentLeader = player
-		party.Moderators = append(removeUUID(party.Moderators, player), currentLeader)
+		party.Moderators.Remove(player)
+		party.Members.Add(currentLeader)
 		r.parties[partyID] = *party
 		err := r.nc.Publish(env.EnsurePrefixed("party.promote.notify.leader"), msg)
 		if err != nil {
@@ -368,8 +369,8 @@ func (r *PartyRegistry) Kick(sender UUID, partyID UUID, player UUID) (success bo
 	})
 	_ = r.nc.Publish(env.EnsurePrefixed("party.kick.notify"), msg)
 
-	party.Members = removeUUID(party.Members, player)
-	party.Moderators = removeUUID(party.Moderators, player)
+	party.Members.Remove(player)
+	party.Moderators.Remove(player)
 	r.parties[partyID] = *party
 
 	if party.TotalSize() <= 1 {
@@ -392,8 +393,9 @@ func (r *PartyRegistry) Transfer(sender UUID, partyID UUID, player UUID) (succes
 	if party.CurrentLeader != sender {
 		return false, "ERR_NOT_LEADER"
 	}
-	party.Moderators = append(removeUUID(party.Moderators, player), sender)
-	party.Members = removeUUID(party.Members, player)
+	party.Moderators.Add(sender)
+	party.Moderators.Remove(player)
+	party.Members.Remove(player)
 	party.CurrentLeader = player
 	r.parties[partyID] = *party
 
@@ -418,6 +420,10 @@ func (r *PartyRegistry) ToggleMute(sender UUID, partyID UUID, state bool) (succe
 		return false, "ERR_NO_PERMISSION"
 	}
 
+	if party.Muted == state {
+		return false, "ERR_ALREADY_STATE"
+	}
+
 	party.Muted = state
 	r.parties[partyID] = *party
 
@@ -440,8 +446,9 @@ func (r *PartyRegistry) Yoink(sender UUID, partyID UUID) (success bool, error st
 	if party.CurrentLeader == sender {
 		return false, "ERR_ALREADY_LEADER"
 	}
-	party.Moderators = append(removeUUID(party.Moderators, sender), party.CurrentLeader)
-	party.Members = removeUUID(party.Members, sender)
+	party.Moderators.Remove(sender)
+	party.Moderators.Add(party.CurrentLeader)
+	party.Members.Remove(sender)
 	party.CurrentLeader = sender
 	r.parties[partyID] = *party
 
@@ -463,6 +470,10 @@ func (r *PartyRegistry) ToggleOpenInvites(sender UUID, partyID UUID, state bool)
 	}
 	if party.CurrentLeader != sender {
 		return false, "ERR_NO_PERMISSION"
+	}
+
+	if party.OpenInvites == state {
+		return false, "ERR_ALREADY_STATE"
 	}
 
 	party.OpenInvites = state
@@ -488,6 +499,10 @@ func (r *PartyRegistry) ToggleOpen(sender UUID, partyID UUID, state bool) (succe
 		return false, "ERR_NO_PERMISSION"
 	}
 
+	if party.Open == state {
+		return false, "ERR_ALREADY_STATE"
+	}
+
 	party.Open = state
 	r.parties[partyID] = *party
 
@@ -501,11 +516,11 @@ func (r *PartyRegistry) ToggleOpen(sender UUID, partyID UUID, state bool) (succe
 }
 
 func (r *PartyRegistry) selectNewLeader(party Party) UUID {
-	if len(party.Moderators) != 0 {
-		return party.Moderators[0]
+	if party.Moderators.Size() != 0 {
+		return party.Moderators.Slice()[0]
 	}
-	if len(party.Members) != 0 {
-		return party.Members[0]
+	if party.Members.Size() != 0 {
+		return party.Members.Slice()[0]
 	}
 	return UUID(uuid.Nil)
 }

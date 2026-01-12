@@ -42,12 +42,75 @@ func (u *UUID) UnmarshalText(data []byte) error {
 type Party struct {
 	ID            UUID                 `json:"id"`
 	CurrentLeader UUID                 `json:"current_leader"` // can 100% change, don't use it as a key. They are NOT included in the Members field
-	Moderators    []UUID               `json:"moderators"`     // they are NOT included in Members, just like CurrentLeader
-	Members       []UUID               `json:"members"`        // all "standard" members of the party. The leader and moderators are NOT part of this list
+	Moderators    *Set                 `json:"moderators"`     // they are NOT included in Members, just like CurrentLeader
+	Members       *Set                 `json:"members"`        // all "standard" members of the party. The leader and moderators are NOT part of this list
 	Open          bool                 `json:"open"`           // anyone can join it with /p join <any member's name>
 	OpenInvites   bool                 `json:"open_invites"`
 	Muted         bool                 `json:"muted"`          // no one can speak except for moderators
 	ActiveInvites map[UUID]PartyInvite `json:"active_invites"` // keyed by invite uuid
+}
+
+type Set struct {
+	elements map[UUID]struct{}
+}
+
+// NewSet creates a new set
+func NewSet() *Set {
+	return &Set{
+		elements: make(map[UUID]struct{}),
+	}
+}
+
+func NewSetFromSlice(slice []UUID) *Set {
+	set := NewSet()
+	for _, v := range slice {
+		set.Add(v)
+	}
+	return set
+}
+
+// Add inserts an element into the set
+func (s *Set) Add(value UUID) {
+	s.elements[value] = struct{}{}
+}
+
+// Remove deletes an element from the set
+func (s *Set) Remove(value UUID) {
+	delete(s.elements, value)
+}
+
+// Contains checks if an element is in the set
+func (s *Set) Contains(value UUID) bool {
+	_, found := s.elements[value]
+	return found
+}
+
+// Size returns the number of elements in the set
+func (s *Set) Size() int {
+	return len(s.elements)
+}
+
+// Slice returns all elements in the set as a slice
+func (s *Set) Slice() []UUID {
+	keys := make([]UUID, 0, len(s.elements))
+	for key := range s.elements {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func (s *Set) UnmarshalJSON(data []byte) error {
+	var slice []UUID
+	if err := json.Unmarshal(data, &slice); err != nil {
+		return err
+	}
+
+	*s = *NewSetFromSlice(slice)
+	return nil
+}
+
+func (s Set) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Slice())
 }
 
 func (p Party) IsInParty(playerID UUID) bool {
@@ -57,42 +120,28 @@ func (p Party) IsInParty(playerID UUID) bool {
 	}
 
 	// Check moderators
-	for _, member := range p.Moderators {
-		if member == playerID {
-			return true
-		}
+	if p.Moderators.Contains(playerID) {
+		return true
 	}
 
 	// Check members
-	for _, member := range p.Members {
-		if member == playerID {
-			return true
-		}
+	if p.Members.Contains(playerID) {
+		return true
 	}
 
 	return false
 }
 
 func (p Party) IsMember(playerID UUID) bool {
-	for _, member := range p.Members {
-		if member == playerID {
-			return true
-		}
-	}
-	return false
+	return p.Members.Contains(playerID)
 }
 
 func (p Party) IsModerator(playerID UUID) bool {
-	for _, member := range p.Moderators {
-		if member == playerID {
-			return true
-		}
-	}
-	return false
+	return p.Moderators.Contains(playerID)
 }
 
 func (p Party) TotalSize() int {
-	return len(p.Members) + len(p.Moderators) + len(p.ActiveInvites) + 1
+	return p.Members.Size() + p.Moderators.Size() + len(p.ActiveInvites) + 1
 }
 
 type PartyInvite struct {
