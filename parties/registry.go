@@ -610,15 +610,6 @@ func (r *PartyRegistry) containsKeyInternal(id UUID) bool {
 	return ok
 }
 
-func removeUUID(slice []UUID, s UUID) []UUID {
-	for i, v := range slice {
-		if v == s {
-			return append(slice[:i], slice[i+1:]...)
-		}
-	}
-	return slice
-}
-
 func (r *PartyRegistry) HandleDisconnect(playerID UUID) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
