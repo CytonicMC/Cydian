@@ -141,7 +141,7 @@ func (p Party) IsModerator(playerID UUID) bool {
 }
 
 func (p Party) TotalSize() int {
-	return p.Members.Size() + p.Moderators.Size() + len(p.ActiveInvites) + 1
+	return p.Members.Size() + p.Moderators.Size() + 1
 }
 
 type PartyInvite struct {

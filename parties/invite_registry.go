@@ -91,7 +91,11 @@ func (r *InviteRegistry) Accept(id UUID) (bool, *PartyInvite) {
 		return false, nil
 	}
 
-	r.partyRegistry.JoinParty(req.PartyID, req.Recipient, true)
+	success, err := r.partyRegistry.JoinParty(req.PartyID, req.Recipient, true)
+	if !success {
+		log.Printf("Failed to join party after accepting invite: %s", err)
+		return false, nil
+	}
 
 	log.Printf("Party invite(%+v) accepted", id)
 	return true, &req
@@ -179,10 +183,6 @@ func (r *InviteRegistry) containsKey(id UUID) bool {
 }
 
 func (r *InviteRegistry) containsKeyInternal(id UUID) bool {
-	for u := range r.invites {
-		if id == u {
-			return true
-		}
-	}
-	return false
+	_, ok := r.invites[id]
+	return ok
 }

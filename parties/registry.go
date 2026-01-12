@@ -217,6 +217,8 @@ func (r *PartyRegistry) DisconnectFromParty(player UUID) {
 		party.Moderators.Remove(player)
 	} else {
 		party.CurrentLeader = r.selectNewLeader(*party)
+		party.Members.Remove(party.CurrentLeader)
+		party.Moderators.Remove(party.CurrentLeader)
 		r.parties[party.ID] = *party
 
 		msg1, _ := json.Marshal(&PartyTwoPlayerPacket{
@@ -269,6 +271,8 @@ func (r *PartyRegistry) LeaveParty(player UUID) (success bool, error string) {
 		}
 
 		party.CurrentLeader = newLeader
+		party.Members.Remove(newLeader)
+		party.Moderators.Remove(newLeader)
 		r.parties[party.ID] = *party
 
 		msg, _ := json.Marshal(&PartyTwoPlayerPacket{
@@ -443,13 +447,20 @@ func (r *PartyRegistry) Yoink(sender UUID, partyID UUID) (success bool, error st
 	if party == nil {
 		return false, "ERR_INVALID_PARTY"
 	}
+	if !party.IsInParty(sender) {
+		return false, "ERR_NOT_IN_PARTY"
+	}
 	if party.CurrentLeader == sender {
 		return false, "ERR_ALREADY_LEADER"
 	}
+
+	oldLeader := party.CurrentLeader
 	party.Moderators.Remove(sender)
-	party.Moderators.Add(party.CurrentLeader)
 	party.Members.Remove(sender)
+
 	party.CurrentLeader = sender
+	party.Moderators.Add(oldLeader)
+
 	r.parties[partyID] = *party
 
 	msg, _ := json.Marshal(&PartyOnePlayerPacket{
@@ -553,13 +564,7 @@ func (r *PartyRegistry) GetAllParties() []Party {
 func (r *PartyRegistry) contains(invite Party) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	for _, party := range r.parties {
-		if invite.ID == party.ID {
-			return true
-		}
-	}
-	return false
+	return r.containsKeyInternal(invite.ID)
 }
 
 // IsInParty checks if the player identified by the given UUID is a member of any party in the registry.
@@ -585,15 +590,13 @@ func (r *PartyRegistry) GetPlayerParty(playerID UUID) (bool, *Party) {
 }
 
 func (r *PartyRegistry) getPlayerPartyInternal(playerID UUID) (bool, *Party) {
-	if !r.isInPartyInternal(playerID) {
-		return false, nil
-	}
-	for _, party := range r.parties {
+	for id, party := range r.parties {
 		if party.IsInParty(playerID) {
-			return true, &party
+			p := r.parties[id]
+			return true, &p
 		}
 	}
-	return false, nil // will never happen
+	return false, nil
 }
 
 func (r *PartyRegistry) containsKey(id UUID) bool {
@@ -603,12 +606,8 @@ func (r *PartyRegistry) containsKey(id UUID) bool {
 }
 
 func (r *PartyRegistry) containsKeyInternal(id UUID) bool {
-	for u := range r.parties {
-		if id == u {
-			return true
-		}
-	}
-	return false
+	_, ok := r.parties[id]
+	return ok
 }
 
 func removeUUID(slice []UUID, s UUID) []UUID {
