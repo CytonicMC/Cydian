@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/nomad/api v0.0.0-20251022123658-12f6941b09e6
+	github.com/hashicorp/nomad/api v0.0.0-20260130141625-d99775b13412
 	github.com/nats-io/nats.go v1.47.0
 	github.com/prometheus/client_golang v1.23.2
 )
