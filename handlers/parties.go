@@ -15,6 +15,7 @@ func RegisterParties(nc *nats.Conn, registry *parties.PartyRegistry) {
 	joinHandler(nc, registry)
 	leaveHandler(nc, registry)
 	promoteHandler(nc, registry)
+	demoteHandler(nc, registry)
 	transferHandler(nc, registry)
 	kickHandler(nc, registry)
 	stateHandler(nc, registry)
@@ -102,6 +103,25 @@ func promoteHandler(nc *nats.Conn, registry *parties.PartyRegistry) {
 		}
 
 		success, reason := registry.Promote(packet.SenderID, packet.PartyID, packet.PlayerID)
+		reply(msg, success, reason)
+	})
+	if err != nil {
+		log.Fatalf("Error subscribing to subject %s: %v", subject, err)
+	}
+	log.Printf("Listening for party promotions on subject '%s'", subject)
+}
+
+func demoteHandler(nc *nats.Conn, registry *parties.PartyRegistry) {
+	const subject = "party.demote.request"
+
+	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
+		var packet parties.PartyTwoPlayerPacket
+		if err := json.Unmarshal(msg.Data, &packet); err != nil {
+			log.Printf("Invalid PartyTwoPlayerPacket message format: %s", msg.Data)
+			return
+		}
+
+		success, reason := registry.Demote(packet.SenderID, packet.PartyID, packet.PlayerID)
 		reply(msg, success, reason)
 	})
 	if err != nil {

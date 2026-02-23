@@ -346,6 +346,42 @@ func (r *PartyRegistry) Promote(sender UUID, partyID UUID, player UUID) (success
 	return false, "ERR_ALREADY_LEADER"
 }
 
+func (r *PartyRegistry) Demote(sender UUID, partyID UUID, player UUID) (success bool, error string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	party := r.getPartyInternal(partyID)
+	if party == nil {
+		return false, "ERR_INVALID_PARTY"
+	}
+	if party.CurrentLeader != sender {
+		return false, "ERR_NOT_LEADER"
+	}
+	if !party.IsInParty(player) {
+		return false, "ERR_TARGET_NOT_IN_PARTY"
+	}
+	if party.IsMember(player) {
+		return false, "ERR_NOT_MODERATOR"
+	}
+
+	msg, _ := json.Marshal(&PartyTwoPlayerPacket{
+		PartyID:  partyID,
+		PlayerID: player,
+		SenderID: sender,
+	})
+
+	if party.IsModerator(player) {
+		party.Moderators.Remove(player)
+		party.Members.Add(player)
+		r.parties[partyID] = *party
+		err := r.nc.Publish(env.EnsurePrefixed("party.demote.notify"), msg)
+		if err != nil {
+			return false, "ERR_BROADCAST_FAILED"
+		}
+		return true, ""
+	}
+	return false, "ERR_ALREADY_LEADER"
+}
+
 func (r *PartyRegistry) Kick(sender UUID, partyID UUID, player UUID) (success bool, error string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
