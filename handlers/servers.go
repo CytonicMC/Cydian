@@ -133,7 +133,7 @@ func proxyStartupHandler(nc *nats.Conn, reg *servers.Registry) {
 	_, err := nc.Subscribe(env.EnsurePrefixed(subject), func(msg *nats.Msg) {
 		// don't care about the message
 
-		ack, err := json.Marshal(reg.GetAll())
+		ack, err := json.Marshal(servers.ServerList{Servers: reg.GetAll()})
 
 		if err != nil {
 			log.Printf("Error marshalling all list: %v", err)
