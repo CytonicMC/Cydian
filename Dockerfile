@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags="-s -w" -a -o Cydian ./main.go
 
 # Runtime stage
-FROM alpine:3.22
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates
 COPY --from=build /workspace/Cydian /
 
