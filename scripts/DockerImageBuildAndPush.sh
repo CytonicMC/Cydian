@@ -32,7 +32,7 @@ docker buildx build \
     --tag "$GHCR_IMAGE:$VERSION" \
     --tag "$GHCR_IMAGE:latest" \
     --push \
-    .
+    ../.
 
 # Clean up the builder
 docker buildx rm multi-arch-builder
