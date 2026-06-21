@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/CytonicMC/Cydian/app"
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/parties"
+	"github.com/CytonicMC/Cydian/internal/app"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/parties"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -148,12 +148,12 @@ func sendJoin(nc *nats.Conn, req parties.PartyInvite) {
 	const subject = "party.invites.accept.notify"
 	marshal, errr := json.Marshal(req)
 	if errr != nil {
-		log.Fatalf("Error marshalling friend request: %v", errr)
+		log.Printf("Error marshalling friend request: %v", errr)
 		return
 	}
 	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
-		log.Fatalf("Error publishing friends acceptance message: %v", err)
+		log.Printf("Error publishing friends acceptance message: %v", err)
 		return
 	}
 }

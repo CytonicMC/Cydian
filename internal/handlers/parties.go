@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/parties"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/parties"
 	"github.com/nats-io/nats.go"
 )
 

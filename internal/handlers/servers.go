@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/servers"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/servers"
 	"github.com/nats-io/nats.go"
 )
 

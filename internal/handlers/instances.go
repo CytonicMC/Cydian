@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/instances"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/instances"
 	"github.com/hashicorp/nomad/api"
 	"github.com/nats-io/nats.go"
 )
@@ -43,11 +43,11 @@ func createHandler(nc *nats.Conn, client *api.Client) {
 		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
 		if errJobs != nil {
 			log.Printf("Error getting job info: %v", errJobs)
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_NOT_FOUND",
 			})
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
@@ -70,23 +70,23 @@ func createHandler(nc *nats.Conn, client *api.Client) {
 		_, _, err := client.Jobs().Scale(*job.ID, packet.InstanceType, &count, "Adding instance(s)", false, nil, nil)
 
 		if err != nil {
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_SCALING_FAILED",
 			})
 			log.Printf("Error scaling job: %v", err)
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
 			return
 		}
 
-		reponse, _ := json.Marshal(instances.InstanceResponse{
+		response, _ := json.Marshal(instances.InstanceResponse{
 			Success: true,
 			Message: "SUCCESS",
 		})
-		errRespond := msg.Respond(reponse)
+		errRespond := msg.Respond(response)
 		if errRespond != nil {
 			log.Printf("Error sending acknowledgment: %v", err)
 		}
@@ -117,11 +117,11 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
 		if errJobs != nil {
 			log.Printf("Error getting job info: %v", errJobs)
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_NOT_FOUND",
 			})
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
@@ -143,11 +143,11 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 		if err != nil {
 			if err != nil {
 				log.Printf("Error registering job: %v", err)
-				reponse, _ := json.Marshal(instances.InstanceResponse{
+				response, _ := json.Marshal(instances.InstanceResponse{
 					Success: false,
 					Message: "SCALE_TO_ZERO_FAILED",
 				})
-				err := msg.Respond(reponse)
+				err := msg.Respond(response)
 				if err != nil {
 					log.Printf("Error sending acknowledgment: %v", err)
 				}
@@ -155,11 +155,11 @@ func deleteAllHandler(nc *nats.Conn, client *api.Client) {
 			}
 		}
 
-		reponse, _ := json.Marshal(instances.InstanceResponse{
+		response, _ := json.Marshal(instances.InstanceResponse{
 			Success: true,
 			Message: "SUCCESS",
 		})
-		errRespond := msg.Respond(reponse)
+		errRespond := msg.Respond(response)
 		if errRespond != nil {
 			log.Printf("Error sending acknowledgment: %v", errRespond)
 		}
@@ -220,11 +220,11 @@ func deleteHandler(nc *nats.Conn, client *api.Client) {
 		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
 		if errJobs != nil {
 			log.Printf("Error getting job info: %v", errJobs)
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_NOT_FOUND",
 			})
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
@@ -245,22 +245,22 @@ func deleteHandler(nc *nats.Conn, client *api.Client) {
 		_, _, err2 := client.Jobs().Register(job, nil)
 		if err2 != nil {
 			log.Printf("Error registering job: %v", err2)
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_REGISTRATION_FAILED",
 			})
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
 			return
 		}
 
-		reponse, _ := json.Marshal(instances.InstanceResponse{
+		response, _ := json.Marshal(instances.InstanceResponse{
 			Success: true,
 			Message: "SUCCESS",
 		})
-		errRespond := msg.Respond(reponse)
+		errRespond := msg.Respond(response)
 		if errRespond != nil {
 			log.Printf("Error sending acknowledgment: %v", errRespond)
 		}
@@ -292,11 +292,11 @@ func updateHandler(nc *nats.Conn, client *api.Client) {
 		job, _, errJobs := client.Jobs().Info(packet.InstanceType, nil)
 		if errJobs != nil {
 			log.Printf("Error getting job info: %v", errJobs)
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_NOT_FOUND",
 			})
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
@@ -310,23 +310,23 @@ func updateHandler(nc *nats.Conn, client *api.Client) {
 		_, _, err := client.Jobs().Register(job, nil)
 
 		if err != nil {
-			reponse, _ := json.Marshal(instances.InstanceResponse{
+			response, _ := json.Marshal(instances.InstanceResponse{
 				Success: false,
 				Message: "JOB_REGISTRATION_FAILED",
 			})
 			log.Printf("Error scaling job: %v", err)
-			err := msg.Respond(reponse)
+			err := msg.Respond(response)
 			if err != nil {
 				log.Printf("Error sending acknowledgment: %v", err)
 			}
 			return
 		}
 
-		reponse, _ := json.Marshal(instances.InstanceResponse{
+		response, _ := json.Marshal(instances.InstanceResponse{
 			Success: true,
 			Message: "SUCCESS",
 		})
-		errRespond := msg.Respond(reponse)
+		errRespond := msg.Respond(response)
 		if errRespond != nil {
 			log.Printf("Error sending acknowledgment: %v", err)
 		}

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/friends"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/friends"
 	"github.com/nats-io/nats.go"
 )
 
@@ -180,12 +180,12 @@ func sendDeclination(nc *nats.Conn, req friends.FriendRequest) {
 	const subject = "friends.decline.notify"
 	marshal, errr := json.Marshal(req)
 	if errr != nil {
-		log.Fatalf("Error marshalling friend request: %v", errr)
+		log.Printf("Error marshalling friend request: %v", errr)
 		return
 	}
 	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
-		log.Fatalf("Error publishing friends declination message: %v", err)
+		log.Printf("Error publishing friends declination message: %v", err)
 		return
 	}
 }

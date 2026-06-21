@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CytonicMC/Cydian/env"
+	"github.com/CytonicMC/Cydian/internal/env"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )

@@ -15,7 +15,7 @@ COPY . .
 ARG TARGETOS
 ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -ldflags="-s -w" -a -o Cydian ./main.go
+    go build -ldflags="-s -w" -a -o Cydian ./cmd/cydian/
 
 # Runtime stage
 FROM alpine:3.22

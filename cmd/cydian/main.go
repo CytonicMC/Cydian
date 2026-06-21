@@ -4,14 +4,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/CytonicMC/Cydian/app"
-	"github.com/CytonicMC/Cydian/env"
-	"github.com/CytonicMC/Cydian/friends"
-	"github.com/CytonicMC/Cydian/handlers"
-	"github.com/CytonicMC/Cydian/metrics"
-	"github.com/CytonicMC/Cydian/parties"
-	"github.com/CytonicMC/Cydian/servers"
-	"github.com/CytonicMC/Cydian/utils"
+	"github.com/CytonicMC/Cydian/internal/app"
+	"github.com/CytonicMC/Cydian/internal/env"
+	"github.com/CytonicMC/Cydian/internal/friends"
+	"github.com/CytonicMC/Cydian/internal/handlers"
+	"github.com/CytonicMC/Cydian/internal/metrics"
+	"github.com/CytonicMC/Cydian/internal/parties"
+	"github.com/CytonicMC/Cydian/internal/servers"
+	"github.com/CytonicMC/Cydian/internal/utils"
 	"github.com/nats-io/nats.go"
 )
 

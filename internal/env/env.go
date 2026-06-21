@@ -31,13 +31,13 @@ func Environment() string {
 	val := strings.ToUpper(strings.TrimSpace(os.Getenv("CYTONIC_ENVIRONMENT")))
 	switch val {
 	case "DEVELOPMENT":
-		return "Devlopment"
+		return "Development"
 	case "ALPHA":
 		return "Alpha"
 	case "PRODUCTION":
 		return "Production"
 	default:
-		return "Development (Defualt)"
+		return "Development (Default)"
 	}
 }
 

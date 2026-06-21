@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CytonicMC/Cydian/env"
+	"github.com/CytonicMC/Cydian/internal/env"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -26,8 +26,8 @@ func NewRegistry(nc *nats.Conn) *Registry {
 }
 
 func (r *Registry) AddOrUpdate(req FriendRequest) (bool, bool) {
-	defer r.mu.Unlock()
 	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if r.contains(req) {
 		log.Printf("Friend request registry already contains %v", req)
@@ -172,7 +172,7 @@ func (r *Registry) expireRequest(requestUUID uuid.UUID) {
 		log.Printf("Error marshalling request: %v", err)
 		return
 	}
-	err1 := r.nats.Publish(subject, data)
+	err1 := r.nats.Publish(env.EnsurePrefixed(subject), data)
 	if err1 != nil {
 		log.Printf("Error publishing request expiry: %v", err1)
 		return
@@ -212,12 +212,12 @@ func SendAcceptance(nc *nats.Conn, req FriendRequest) {
 	const subject = "friends.accept.notify"
 	marshal, errr := json.Marshal(req)
 	if errr != nil {
-		log.Fatalf("Error marshalling friend request: %v", errr)
+		log.Printf("Error marshalling friend request: %v", errr)
 		return
 	}
 	err := nc.Publish(env.EnsurePrefixed(subject), marshal)
 	if err != nil {
-		log.Fatalf("Error publishing friends acceptance message: %v", err)
+		log.Printf("Error publishing friends acceptance message: %v", err)
 		return
 	}
 }

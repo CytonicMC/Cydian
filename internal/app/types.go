@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/CytonicMC/Cydian/friends"
-	"github.com/CytonicMC/Cydian/parties"
-	"github.com/CytonicMC/Cydian/servers"
+	"github.com/CytonicMC/Cydian/internal/friends"
+	"github.com/CytonicMC/Cydian/internal/parties"
+	"github.com/CytonicMC/Cydian/internal/servers"
 )
 
 type Cydian struct {

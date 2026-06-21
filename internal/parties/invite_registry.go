@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CytonicMC/Cydian/env"
+	"github.com/CytonicMC/Cydian/internal/env"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -32,21 +32,21 @@ func NewInviteRegistry(conn *nats.Conn, registry *PartyRegistry) *InviteRegistry
 	}
 }
 
-func (r *InviteRegistry) CreateInvite(sender UUID, party UUID, recipeint UUID) (*PartyInvite, string) {
+func (r *InviteRegistry) CreateInvite(sender UUID, party UUID, recipient UUID) (*PartyInvite, string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	partyObj := r.partyRegistry.GetParty(party)
 	if partyObj != nil { // means it's a new party
-		if partyObj.IsInParty(recipeint) {
+		if partyObj.IsInParty(recipient) {
 			return nil, "ERR_ALREADY_IN_PARTY"
 		}
 		if !partyObj.OpenInvites && partyObj.CurrentLeader != sender {
 			return nil, "ERR_NO_PERMISSION"
 		}
 	}
-	if r.containsPairInternal(party, recipeint) {
-		fmt.Printf("Party Invite registry already contains an invite to %s, for the party: %s", recipeint, party)
+	if r.containsPairInternal(party, recipient) {
+		fmt.Printf("Party Invite registry already contains an invite to %s, for the party: %s", recipient, party)
 		return nil, "ERR_ALREADY_INVITED"
 	}
 
@@ -54,7 +54,7 @@ func (r *InviteRegistry) CreateInvite(sender UUID, party UUID, recipeint UUID) (
 	invite := PartyInvite{
 		ID:        inviteUUID,
 		PartyID:   party,
-		Recipient: recipeint,
+		Recipient: recipient,
 		SenderID:  sender,
 		Expiry:    time.Now().Add(time.Second * 60),
 	}
@@ -138,12 +138,12 @@ func (r *InviteRegistry) expireInvite(requestUUID UUID) {
 		RequestID: requestUUID, PartyID: invite.PartyID,
 		Recipient: invite.Recipient, SenderID: invite.SenderID,
 	}
-	serailized, err1 := json.Marshal(obj)
+	serialized, err1 := json.Marshal(obj)
 	if err1 != nil {
 		log.Printf("Error marshalling invite (%v) expiry: %v", requestUUID, err1)
 		return
 	}
-	err := r.nc.Publish(env.EnsurePrefixed("parties.invite.expire"), serailized)
+	err := r.nc.Publish(env.EnsurePrefixed("parties.invite.expire"), serialized)
 	if err != nil {
 		log.Printf("Error publishing invite (%v) expiry: %v", requestUUID, err)
 	}
