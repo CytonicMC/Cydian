@@ -12,7 +12,6 @@ type ServerInfo struct {
 	Port     int        `json:"port"`
 	ID       string     `json:"id"`
 	LastSeen *time.Time `json:"last_seen"` // pointer indicates the value may be null.
-	Group    string     `json:"group"`
 }
 
 type ServerList struct {
