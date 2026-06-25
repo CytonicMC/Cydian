@@ -1,10 +1,10 @@
 module github.com/CytonicMC/Cydian
 
-go 1.23.0
+go 1.25
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/nomad/api v0.0.0-20251022123658-12f6941b09e6
+	github.com/hashicorp/nomad/api v0.0.0-20260625143657-3c635d2b223b
 	github.com/nats-io/nats.go v1.47.0
 	github.com/prometheus/client_golang v1.23.2
 )
@@ -12,6 +12,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/cronexpr v1.1.3 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
