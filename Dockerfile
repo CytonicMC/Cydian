@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Cydian
 # Builder stage
-FROM --platform=$BUILDPLATFORM golang:1.25 AS build
+FROM --platform=$BUILDPLATFORM golang:1.27 AS build
 
 WORKDIR /workspace
 
